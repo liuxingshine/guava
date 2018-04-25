@@ -225,6 +225,14 @@ public final class MediaType {
   public static final MediaType WEBM_AUDIO = createConstant(AUDIO_TYPE, "webm");
 
   /**
+   * Media type for L16 audio, as defined by <a href="https://tools.ietf.org/html/rfc2586">RFC
+   * 2586</a>.
+   *
+   * @since 24.1
+   */
+  public static final MediaType L16_AUDIO = createConstant(AUDIO_TYPE, "l16");
+
+  /**
    * Media type for L24 audio, as defined by <a href="https://tools.ietf.org/html/rfc3190">RFC
    * 3190</a>.
    *
@@ -628,7 +636,7 @@ public final class MediaType {
    * removed.
    *
    * @throws IllegalArgumentException if either {@code attribute} or {@code values} is invalid
-   * @since NEXT
+   * @since 24.0
    */
   public MediaType withParameters(String attribute, Iterable<String> values) {
     checkNotNull(attribute);
@@ -734,6 +742,26 @@ public final class MediaType {
     return mediaType;
   }
 
+  private static MediaType create(
+      String type, String subtype, Multimap<String, String> parameters) {
+    checkNotNull(type);
+    checkNotNull(subtype);
+    checkNotNull(parameters);
+    String normalizedType = normalizeToken(type);
+    String normalizedSubtype = normalizeToken(subtype);
+    checkArgument(
+        !WILDCARD.equals(normalizedType) || WILDCARD.equals(normalizedSubtype),
+        "A wildcard type cannot be used with a non-wildcard subtype");
+    ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
+    for (Entry<String, String> entry : parameters.entries()) {
+      String attribute = normalizeToken(entry.getKey());
+      builder.put(attribute, normalizeParameterValue(attribute, entry.getValue()));
+    }
+    MediaType mediaType = new MediaType(normalizedType, normalizedSubtype, builder.build());
+    // Return one of the constants if the media type is a known type.
+    return MoreObjects.firstNonNull(KNOWN_TYPES.get(mediaType), mediaType);
+  }
+
   /**
    * Creates a media type with the "application" type and the given subtype.
    *
@@ -777,26 +805,6 @@ public final class MediaType {
    */
   static MediaType createVideoType(String subtype) {
     return create(VIDEO_TYPE, subtype);
-  }
-
-  private static MediaType create(
-      String type, String subtype, Multimap<String, String> parameters) {
-    checkNotNull(type);
-    checkNotNull(subtype);
-    checkNotNull(parameters);
-    String normalizedType = normalizeToken(type);
-    String normalizedSubtype = normalizeToken(subtype);
-    checkArgument(
-        !WILDCARD.equals(normalizedType) || WILDCARD.equals(normalizedSubtype),
-        "A wildcard type cannot be used with a non-wildcard subtype");
-    ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
-    for (Entry<String, String> entry : parameters.entries()) {
-      String attribute = normalizeToken(entry.getKey());
-      builder.put(attribute, normalizeParameterValue(attribute, entry.getValue()));
-    }
-    MediaType mediaType = new MediaType(normalizedType, normalizedSubtype, builder.build());
-    // Return one of the constants if the media type is a known type.
-    return MoreObjects.firstNonNull(KNOWN_TYPES.get(mediaType), mediaType);
   }
 
   private static String normalizeToken(String token) {

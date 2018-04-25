@@ -96,7 +96,7 @@ public final class HttpHeaders {
    * The HTTP <a href="https://tools.ietf.org/html/rfc7540#section-3.2.1">{@code HTTP2-Settings}
    * </a> header field name.
    *
-   * @since NEXT
+   * @since 24.0
    */
   public static final String HTTP2_SETTINGS = "HTTP2-Settings";
   /** The HTTP {@code If-Match} header field name. */
@@ -349,6 +349,17 @@ public final class HttpHeaders {
   public static final String X_REQUESTED_WITH = "X-Requested-With";
   /** The HTTP {@code X-User-IP} header field name. */
   public static final String X_USER_IP = "X-User-IP";
+  /**
+   * The HTTP <a href="https://goo.gl/VKpXxa">{@code X-Download-Options}</a> header field name.
+   *
+   * <p>When the new X-Download-Options header is present with the value {@code noopen}, the user is
+   * prevented from opening a file download directly; instead, they must first save the file
+   * locally.
+   *
+   * @since 24.1
+   */
+  @Beta
+  public static final String X_DOWNLOAD_OPTIONS = "X-Download-Options";
   /** The HTTP {@code X-XSS-Protection} header field name. */
   public static final String X_XSS_PROTECTION = "X-XSS-Protection";
   /**

@@ -27,7 +27,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static com.google.common.util.concurrent.Futures.catching;
 import static com.google.common.util.concurrent.Futures.catchingAsync;
-import static com.google.common.util.concurrent.Futures.dereference;
 import static com.google.common.util.concurrent.Futures.getDone;
 import static com.google.common.util.concurrent.Futures.immediateCancelledFuture;
 import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
@@ -927,10 +926,6 @@ public class FuturesTest extends TestCase {
     }
   }
 
-  private static <I, O> FunctionSpy<I, O> spy(Function<I, O> delegate) {
-    return new FunctionSpy<>(delegate);
-  }
-
   private static <X extends Throwable, V> Function<X, V> unexpectedFunction() {
     return new Function<X, V>() {
       @Override
@@ -957,6 +952,10 @@ public class FuturesTest extends TestCase {
     void verifyCallCount(int expected) {
       assertThat(count).isEqualTo(expected);
     }
+  }
+
+  private static <I, O> FunctionSpy<I, O> spy(Function<I, O> delegate) {
+    return new FunctionSpy<>(delegate);
   }
 
   private static <X extends Throwable, V> AsyncFunctionSpy<X, V> spy(AsyncFunction<X, V> delegate) {
@@ -2080,58 +2079,6 @@ public class FuturesTest extends TestCase {
         return returnValue;
       }
     };
-  }
-
-  public void testDereference_genericsWildcard() throws Exception {
-    ListenableFuture<?> inner = immediateFuture(null);
-    @SuppressWarnings("FutureReturnValueIgnored")
-    ListenableFuture<ListenableFuture<?>> outer =
-        Futures.<ListenableFuture<?>>immediateFuture(inner);
-    ListenableFuture<?> dereferenced = dereference(outer);
-    assertNull(getDone(dereferenced));
-  }
-
-  public void testDereference_genericsHierarchy() throws Exception {
-    FooChild fooChild = new FooChild();
-    ListenableFuture<FooChild> inner = immediateFuture(fooChild);
-    @SuppressWarnings("FutureReturnValueIgnored")
-    ListenableFuture<ListenableFuture<FooChild>> outer = immediateFuture(inner);
-    ListenableFuture<Foo> dereferenced = Futures.<Foo>dereference(outer);
-    assertSame(fooChild, getDone(dereferenced));
-  }
-
-  public void testDereference_resultCancelsOuter() throws Exception {
-    @SuppressWarnings("FutureReturnValueIgnored")
-    ListenableFuture<ListenableFuture<Foo>> outer = SettableFuture.create();
-    ListenableFuture<Foo> dereferenced = dereference(outer);
-    dereferenced.cancel(true);
-    assertTrue(outer.isCancelled());
-  }
-
-  public void testDereference_resultCancelsInner() throws Exception {
-    ListenableFuture<Foo> inner = SettableFuture.create();
-    @SuppressWarnings("FutureReturnValueIgnored")
-    ListenableFuture<ListenableFuture<Foo>> outer = immediateFuture(inner);
-    ListenableFuture<Foo> dereferenced = dereference(outer);
-    dereferenced.cancel(true);
-    assertTrue(inner.isCancelled());
-  }
-
-  public void testDereference_outerCancelsResult() throws Exception {
-    @SuppressWarnings("FutureReturnValueIgnored")
-    ListenableFuture<ListenableFuture<Foo>> outer = SettableFuture.create();
-    ListenableFuture<Foo> dereferenced = dereference(outer);
-    outer.cancel(true);
-    assertTrue(dereferenced.isCancelled());
-  }
-
-  public void testDereference_innerCancelsResult() throws Exception {
-    ListenableFuture<Foo> inner = SettableFuture.create();
-    @SuppressWarnings("FutureReturnValueIgnored")
-    ListenableFuture<ListenableFuture<Foo>> outer = immediateFuture(inner);
-    ListenableFuture<Foo> dereferenced = dereference(outer);
-    inner.cancel(true);
-    assertTrue(dereferenced.isCancelled());
   }
 
   /** Runnable which can be called a single time, and only after {@link #expectCall} is called. */

@@ -159,8 +159,7 @@ public final class MoreFiles {
     @Override
     public byte[] read() throws IOException {
       try (SeekableByteChannel channel = Files.newByteChannel(path, options)) {
-        return com.google.common.io.Files.readFile(
-            Channels.newInputStream(channel), channel.size());
+        return ByteStreams.toByteArray(Channels.newInputStream(channel), channel.size());
       }
     }
 
@@ -365,6 +364,14 @@ public final class MoreFiles {
         return "MoreFiles.isDirectory(" + Arrays.toString(optionsCopy) + ")";
       }
     };
+  }
+
+  /** Returns whether or not the file with the given name in the given dir is a directory. */
+  private static boolean isDirectory(
+      SecureDirectoryStream<Path> dir, Path name, LinkOption... options) throws IOException {
+    return dir.getFileAttributeView(name, BasicFileAttributeView.class, options)
+        .readAttributes()
+        .isDirectory();
   }
 
   /**
@@ -774,14 +781,6 @@ public final class MoreFiles {
     if (!Arrays.asList(options).contains(RecursiveDeleteOption.ALLOW_INSECURE)) {
       throw new InsecureRecursiveDeleteException(path.toString());
     }
-  }
-
-  /** Returns whether or not the file with the given name in the given dir is a directory. */
-  private static boolean isDirectory(
-      SecureDirectoryStream<Path> dir, Path name, LinkOption... options) throws IOException {
-    return dir.getFileAttributeView(name, BasicFileAttributeView.class, options)
-        .readAttributes()
-        .isDirectory();
   }
 
   /**

@@ -59,6 +59,11 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  * {@link #values} views is the same as insertion order. Any removal invalidates any ordering
  * guarantees.
  *
+ * <p>This class should not be assumed to be universally superior to {@code java.util.HashMap}.
+ * Generally speaking, this class reduces object allocation and memory consumption at the price of
+ * moderately increased constant factors of CPU.  Only use this class when there is a specific
+ * reason to prioritize memory over CPU.
+ *
  * @author Louis Wasserman
  */
 @GwtIncompatible // not worth using in GWT for now
@@ -368,11 +373,6 @@ class CompactHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
     return remove(key, smearedHash(key));
   }
 
-  @CanIgnoreReturnValue
-  private V removeEntry(int entryIndex) {
-    return remove(keys[entryIndex], getHash(entries[entryIndex]));
-  }
-
   @NullableDecl
   private V remove(@NullableDecl Object key, int hash) {
     int tableIndex = hash & hashTableMask();
@@ -406,6 +406,11 @@ class CompactHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
       next = getNext(entries[next]);
     } while (next != UNSET);
     return null;
+  }
+
+  @CanIgnoreReturnValue
+  private V removeEntry(int entryIndex) {
+    return remove(keys[entryIndex], getHash(entries[entryIndex]));
   }
 
   /**
